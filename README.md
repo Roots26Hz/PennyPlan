@@ -25,11 +25,10 @@ Visualization Logic (Proxy & Scale): Dynamically scaling lightweight, generic CC
 
 Spatial Math: three-mesh-bvh for real-time collision detection and wall-snapping to prove the furniture physically fits.
 
-2. AI Vision & Processing (The Spatial Engine)
+2. AI Vision & Processing
+Spatial Ingestion: GitHub Models API (GPT-4o) to parse 2D hand-drawn sketches into structured JSON floorplans.
 
-Spatial Ingestion (API): OpenAI GPT-4o (Vision API) or Qwen2-VL to parse the user's 2D hand-drawn sketch and output a structured JSON floorplan (defining room coordinates and scale).
-
-Data Extraction (API): Lightweight LLM (e.g., GPT-4o-mini or Gemini Flash) to read unstructured e-commerce product descriptions and strictly output structured dimensional data (Width, Depth, Height) and pricing.
+Data Extraction: LLM-driven Attribute Value Extraction (AVE) to parse unstructured e-commerce descriptions into strict dimensional data.
 
 3. Backend & Data Logistics (The Budget-First Core)
 
