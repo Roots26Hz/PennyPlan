@@ -78,7 +78,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-stone-200 bg-white px-6 py-6 text-center text-sm text-stone-400">
-        PennyPlan — Built for the AMD Hackathon 2026. AI-powered budget home
+        PennyPlan — Built for the AMD Slingshot Hackathon 2026. AI-powered budget home
         decor optimization.
       </footer>
     </main>
