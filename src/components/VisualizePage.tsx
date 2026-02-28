@@ -11,6 +11,7 @@ import {
   Maximize,
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   ArrowLeftRight,
 } from "lucide-react";
 import type {
@@ -222,10 +223,25 @@ export default function VisualizePage() {
     0
   );
 
+  const handleBackToPreferences = () => {
+    // Clear previous results so a fresh search runs with updated preferences
+    setSearchResults([]);
+    setOptimizationResult(null);
+    setAlternatives([]);
+    setStep("preferences");
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
+        <button
+          onClick={handleBackToPreferences}
+          className="mb-4 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
+        >
+          <ArrowLeft size={16} />
+          Back to Preferences
+        </button>
         <h2 className="text-3xl font-bold text-stone-800">
           Your Room — Optimized
         </h2>

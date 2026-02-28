@@ -46,7 +46,7 @@ interface PennyPlanState {
   // Optimization
   optimizationResult: OptimizationResult | null;
   isOptimizing: boolean;
-  setOptimizationResult: (result: OptimizationResult) => void;
+  setOptimizationResult: (result: OptimizationResult | null) => void;
   setIsOptimizing: (v: boolean) => void;
 
   // Alternatives (two suggestions per category)
