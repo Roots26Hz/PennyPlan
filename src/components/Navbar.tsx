@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, RotateCcw } from "lucide-react";
+import { Home, RotateCcw, Store } from "lucide-react";
 import { useStore } from "@/lib/store";
 
 export default function Navbar() {
@@ -47,14 +47,23 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Reset */}
-        <button
-          onClick={reset}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
-        >
-          <RotateCcw size={14} />
-          Start Over
-        </button>
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dealers"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-penny-600 transition-colors hover:bg-penny-50 hover:text-penny-700"
+          >
+            <Store size={14} />
+            <span className="hidden sm:inline">Dealer Portal</span>
+          </Link>
+          <button
+            onClick={reset}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
+          >
+            <RotateCcw size={14} />
+            Start Over
+          </button>
+        </div>
       </div>
     </nav>
   );

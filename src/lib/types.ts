@@ -169,3 +169,46 @@ export interface FurnitureSearchQuery {
   style?: StylePreference;
   sortBy: "price_asc" | "price_desc" | "rating" | "relevance";
 }
+
+// ─── Local Dealer Types ──────────────────────────────────────────────────────
+
+/** A local furniture dealer registered on PennyPlan */
+export interface LocalDealer {
+  id: string;
+  business_name: string;
+  owner_name: string;
+  email: string;
+  phone?: string;
+  city: string;
+  state: string;
+  zip_code?: string;
+  website?: string;
+  created_at?: string;
+}
+
+/** A product uploaded by a local dealer */
+export interface LocalProduct {
+  id: string;
+  dealer_id: string;
+  name: string;
+  category: FurnitureCategory;
+  price: number;
+  width_in: number;
+  depth_in: number;
+  height_in: number;
+  style_tags: string[];
+  color: string;
+  rating: number;
+  review_count: number;
+  in_stock: boolean;
+  image_url?: string;
+  product_url?: string;
+  description?: string;
+  created_at?: string;
+  // Joined from local_dealers
+  local_dealers?: {
+    business_name: string;
+    city: string;
+    state: string;
+  };
+}

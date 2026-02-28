@@ -113,18 +113,35 @@ export default function VisualizePage() {
     const doSearch = async () => {
       setIsSearching(true);
       try {
+        // Ensure we have valid categories to search
+        const categories = parseResult.suggestedCategories;
+        if (!categories || categories.length === 0) {
+          console.warn("No suggested categories from parse result, using defaults");
+        }
+        const safeCategories =
+          categories && categories.length > 0
+            ? categories
+            : ["sofa", "table", "chair", "lamp", "rug", "bookshelf"];
+
         const res = await fetch("/api/search-furniture", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            categories: parseResult.suggestedCategories,
-            maxPrice: preferences.budget,
-            style: preferences.style,
+            categories: safeCategories,
+            maxPrice: preferences.budget || 2000,
+            style: preferences.style || "modern",
             sortBy:
               preferences.prioritize === "price" ? "price_asc" : "rating",
           }),
         });
+
+        if (!res.ok) {
+          console.error("Search API returned", res.status, await res.text());
+          return;
+        }
+
         const data = await res.json();
+        console.log(`[VisualizePage] search returned ${(data.items || []).length} items`);
         setSearchResults(data.items || []);
       } catch (err) {
         console.error("Search failed:", err);
