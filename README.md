@@ -28,7 +28,7 @@ PennyPlan is an AI-powered home furnishing assistant that helps you find the che
 | Language | TypeScript |
 | Styling | Tailwind CSS |
 | 3D | Three.js, React Three Fiber, Drei |
-| AI | OpenAI GPT-4o, Vercel AI SDK |
+| AI | OpenAI GPT-4o |
 | Vector Search | Pinecone |
 | Database | Supabase |
 | State | Zustand |
