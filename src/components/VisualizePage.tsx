@@ -20,8 +20,141 @@ import type {
   OptimizationResult,
   PlacedFurniture,
   FurnitureAlternatives,
+  DesignPreferences,
+  SketchParseResult,
 } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_COLORS_BORDER } from "@/lib/types";
+
+const ALL_CATEGORIES: FurnitureCategory[] = [
+  "sofa",
+  "chair",
+  "table",
+  "desk",
+  "bed",
+  "dresser",
+  "bookshelf",
+  "nightstand",
+  "rug",
+  "lamp",
+  "storage",
+];
+
+const CATEGORY_KEYWORDS: Record<string, FurnitureCategory> = {
+  couch: "sofa",
+  loveseat: "sofa",
+  sectional: "sofa",
+  armchair: "chair",
+  recliner: "chair",
+  stool: "chair",
+  coffee: "table",
+  side: "table",
+  dining: "table",
+  workstation: "desk",
+  office: "desk",
+  mattress: "bed",
+  chest: "dresser",
+  drawers: "dresser",
+  shelf: "bookshelf",
+  shelves: "bookshelf",
+  bookcase: "bookshelf",
+  bedside: "nightstand",
+  carpet: "rug",
+  light: "lamp",
+  lighting: "lamp",
+  cabinet: "storage",
+  organizer: "storage",
+};
+
+function normalizeTerm(value: string): string {
+  return value.toLowerCase().replace(/[^a-z\s-]/g, "").trim();
+}
+
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+
+  const matrix = Array.from({ length: a.length + 1 }, () =>
+    new Array<number>(b.length + 1).fill(0)
+  );
+
+  for (let i = 0; i <= a.length; i += 1) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j += 1) matrix[0][j] = j;
+
+  for (let i = 1; i <= a.length; i += 1) {
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  return matrix[a.length][b.length];
+}
+
+function closestCategoryForTerm(rawTerm: string): FurnitureCategory | null {
+  const term = normalizeTerm(rawTerm);
+  if (!term) return null;
+
+  const exactCategory = ALL_CATEGORIES.find((cat) => cat === term);
+  if (exactCategory) return exactCategory;
+
+  for (const [key, category] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (term === key || term.includes(key) || key.includes(term)) {
+      return category;
+    }
+  }
+
+  const candidates = [
+    ...ALL_CATEGORIES.map((cat) => ({ key: cat, category: cat })),
+    ...Object.entries(CATEGORY_KEYWORDS).map(([key, category]) => ({
+      key,
+      category,
+    })),
+  ];
+
+  let best: { score: number; category: FurnitureCategory } | null = null;
+  for (const candidate of candidates) {
+    const score = levenshtein(term, candidate.key);
+    if (!best || score < best.score) {
+      best = { score, category: candidate.category };
+    }
+  }
+
+  if (!best) return null;
+  return best.score <= Math.max(3, Math.floor(term.length * 0.35))
+    ? best.category
+    : null;
+}
+
+function resolveSearchCategories(
+  preferences: DesignPreferences,
+  parseResult: SketchParseResult
+): FurnitureCategory[] {
+  const fallback: FurnitureCategory[] =
+    parseResult.suggestedCategories?.length > 0
+      ? parseResult.suggestedCategories
+      : ["sofa", "table", "chair", "lamp", "rug", "bookshelf"];
+
+  if (preferences.roomScope !== "custom") return fallback;
+
+  const terms = preferences.requestedFurniture
+    .split(/,|\n|;/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (terms.length === 0) return fallback;
+
+  const resolved = terms
+    .map((term) => closestCategoryForTerm(term))
+    .filter((cat): cat is FurnitureCategory => Boolean(cat));
+
+  const unique = Array.from(new Set(resolved));
+  return unique.length > 0 ? unique : fallback;
+}
 
 // Dynamic import for Three.js (no SSR)
 const RoomViewer3D = dynamic(() => import("@/components/RoomViewer3D"), {
@@ -114,15 +247,7 @@ export default function VisualizePage() {
     const doSearch = async () => {
       setIsSearching(true);
       try {
-        // Ensure we have valid categories to search
-        const categories = parseResult.suggestedCategories;
-        if (!categories || categories.length === 0) {
-          console.warn("No suggested categories from parse result, using defaults");
-        }
-        const safeCategories =
-          categories && categories.length > 0
-            ? categories
-            : ["sofa", "table", "chair", "lamp", "rug", "bookshelf"];
+        const safeCategories = resolveSearchCategories(preferences, parseResult);
 
         const res = await fetch("/api/search-furniture", {
           method: "POST",
@@ -152,7 +277,7 @@ export default function VisualizePage() {
     };
 
     doSearch();
-  }, [parseResult]);
+  }, [parseResult, preferences]);
 
   // Auto-optimize when search results arrive
   useEffect(() => {

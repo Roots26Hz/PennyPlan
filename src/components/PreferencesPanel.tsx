@@ -1,8 +1,8 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import type { StylePreference } from "@/lib/types";
-import { DollarSign, Palette, Sparkles, ArrowRight } from "lucide-react";
+import type { StylePreference, FloorPlan } from "@/lib/types";
+import { DollarSign, Palette, Sparkles, ArrowRight, Ruler, Armchair } from "lucide-react";
 
 const STYLES: { value: StylePreference; label: string; emoji: string }[] = [
   { value: "modern", label: "Modern", emoji: "🏙️" },
@@ -16,7 +16,58 @@ const STYLES: { value: StylePreference; label: string; emoji: string }[] = [
 ];
 
 export default function PreferencesPanel() {
-  const { preferences, setPreferences, setStep, parseResult } = useStore();
+  const { preferences, setPreferences, setStep, parseResult, setParseResult } = useStore();
+
+  const getResizedRectWalls = (
+    currentFloorPlan: FloorPlan,
+    widthFt: number,
+    lengthFt: number
+  ) => {
+    const wallIds = currentFloorPlan.walls?.map((w) => w.id) || [];
+    const ids = [
+      wallIds[0] || "w1",
+      wallIds[1] || "w2",
+      wallIds[2] || "w3",
+      wallIds[3] || "w4",
+    ];
+
+    return [
+      { id: ids[0], startX: 0, startY: 0, endX: widthFt, endY: 0, lengthFt: widthFt },
+      { id: ids[1], startX: widthFt, startY: 0, endX: widthFt, endY: lengthFt, lengthFt: lengthFt },
+      { id: ids[2], startX: widthFt, startY: lengthFt, endX: 0, endY: lengthFt, lengthFt: widthFt },
+      { id: ids[3], startX: 0, startY: lengthFt, endX: 0, endY: 0, lengthFt: lengthFt },
+    ];
+  };
+
+  const handleDimensionChange = (
+    key: "widthFt" | "lengthFt" | "heightFt",
+    rawValue: string
+  ) => {
+    if (!parseResult) return;
+
+    const parsed = Number(rawValue);
+    if (!Number.isFinite(parsed)) return;
+    const nextValue = Math.max(4, Math.min(60, parsed));
+
+    const current = parseResult.floorPlan;
+    const nextFloorPlan: FloorPlan = {
+      ...current,
+      [key]: nextValue,
+    };
+
+    if (key === "widthFt" || key === "lengthFt") {
+      nextFloorPlan.walls = getResizedRectWalls(
+        nextFloorPlan,
+        key === "widthFt" ? nextValue : current.widthFt,
+        key === "lengthFt" ? nextValue : current.lengthFt
+      );
+    }
+
+    setParseResult({
+      ...parseResult,
+      floorPlan: nextFloorPlan,
+    });
+  };
 
   const handleSearch = async () => {
     setStep("visualize");
@@ -37,28 +88,39 @@ export default function PreferencesPanel() {
       {/* Room Summary */}
       {parseResult && (
         <div className="rounded-xl border border-stone-200 bg-white p-5">
-          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-400">
-            Detected Room
-          </h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-stone-800">
-                {parseResult.floorPlan.widthFt}&apos;
-              </p>
-              <p className="text-xs text-stone-400">Width</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-stone-800">
-                {parseResult.floorPlan.lengthFt}&apos;
-              </p>
-              <p className="text-xs text-stone-400">Length</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-stone-800">
-                {parseResult.floorPlan.heightFt}&apos;
-              </p>
-              <p className="text-xs text-stone-400">Height</p>
-            </div>
+          <div className="mb-4 flex items-center gap-2">
+            <Ruler className="text-penny-500" size={18} />
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-stone-400">
+              Room Dimensions (Editable)
+            </h3>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {(
+              [
+                { key: "widthFt", label: "Width", value: parseResult.floorPlan.widthFt },
+                { key: "lengthFt", label: "Length", value: parseResult.floorPlan.lengthFt },
+                { key: "heightFt", label: "Height", value: parseResult.floorPlan.heightFt },
+              ] as const
+            ).map((dim) => (
+              <label key={dim.key} className="text-center">
+                <p className="mb-1 text-xs text-stone-400">{dim.label}</p>
+                <div className="flex items-center justify-center gap-1">
+                  <input
+                    type="number"
+                    min={4}
+                    max={60}
+                    step={0.5}
+                    value={dim.value}
+                    onChange={(e) => handleDimensionChange(dim.key, e.target.value)}
+                    className="w-20 rounded-lg border border-stone-300 bg-white px-2 py-1 text-center text-lg font-semibold text-stone-800 outline-none ring-penny-200 focus:ring-2"
+                  />
+                  <span className="text-sm text-stone-500">ft</span>
+                </div>
+              </label>
+            ))}
+          </div>
+          <div className="mt-3 rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-500">
+            Adjust these values if the AI dimensions are slightly off.
           </div>
         </div>
       )}
@@ -89,6 +151,60 @@ export default function PreferencesPanel() {
             <span className="text-sm text-stone-400">$10,000</span>
           </div>
         </div>
+      </div>
+
+      {/* Furniture Selection */}
+      <div className="rounded-xl border border-stone-200 bg-white p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Armchair className="text-penny-500" size={20} />
+          <h3 className="text-lg font-semibold text-stone-800">Furniture Selection</h3>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => setPreferences({ roomScope: "entire-room" })}
+            className={`rounded-xl border-2 px-3 py-3 text-center transition-all ${
+              preferences.roomScope === "entire-room"
+                ? "border-penny-500 bg-penny-50 shadow-sm"
+                : "border-stone-200 hover:border-stone-300"
+            }`}
+          >
+            <p className="text-sm font-semibold text-stone-700">Entire Room</p>
+            <p className="mt-1 text-xs text-stone-400">Auto-suggest full setup</p>
+          </button>
+
+          <button
+            onClick={() => setPreferences({ roomScope: "custom" })}
+            className={`rounded-xl border-2 px-3 py-3 text-center transition-all ${
+              preferences.roomScope === "custom"
+                ? "border-penny-500 bg-penny-50 shadow-sm"
+                : "border-stone-200 hover:border-stone-300"
+            }`}
+          >
+            <p className="text-sm font-semibold text-stone-700">Custom Items</p>
+            <p className="mt-1 text-xs text-stone-400">Pick only what you need</p>
+          </button>
+        </div>
+
+        {preferences.roomScope === "custom" && (
+          <div className="mt-4 space-y-2">
+            <label className="text-xs font-medium uppercase tracking-wide text-stone-400">
+              What furniture do you want?
+            </label>
+            <textarea
+              rows={3}
+              value={preferences.requestedFurniture}
+              onChange={(e) =>
+                setPreferences({ requestedFurniture: e.target.value })
+              }
+              placeholder="Example: sofa, coffee table, floor lamp"
+              className="w-full resize-none rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm text-stone-700 placeholder:text-stone-400 outline-none ring-penny-200 focus:ring-2"
+            />
+            <p className="text-xs text-stone-500">
+              If an item is unavailable, we&apos;ll pick the closest category in our catalog.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Style Selection */}

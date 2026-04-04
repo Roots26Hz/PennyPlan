@@ -63,6 +63,8 @@ const defaultPreferences: DesignPreferences = {
   style: "modern",
   colorPalette: ["#f5f5f4", "#78716c", "#ea580c"],
   prioritize: "price",
+  roomScope: "entire-room",
+  requestedFurniture: "",
 };
 
 export const useStore = create<PennyPlanState>((set) => ({

@@ -82,6 +82,8 @@ export interface DesignPreferences {
   style: StylePreference;
   colorPalette: string[];
   prioritize: "price" | "rating" | "style";
+  roomScope: "entire-room" | "custom";
+  requestedFurniture: string;
 }
 
 export type StylePreference =
